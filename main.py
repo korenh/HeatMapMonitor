@@ -1,14 +1,15 @@
+import os
+import random
 import numpy as np
-from scipy import signal
 from flask_cors import CORS
+from flask.globals import request
 from flask import Flask, jsonify, render_template
-from scipy.signal import butter, lfilter
-from matplotlib.colors import LogNorm
 
 app = Flask(__name__, static_folder="client/build/static/",
             template_folder="client/build/")
 CORS(app)
 
+path = './data/sample/'
 time_list = [
    "11/12/2016",
    "12/12/2016",
@@ -27,14 +28,10 @@ time_list = [
 def main():
     return render_template('index.html')
 
-@app.route('/data')
+@app.route('/data', methods=['POST'])
 def data():
-    signals = np.load('./data/20-02-2021_07-20-24.npy', mmap_mode='r')
-    b, a = butter(5, Wn=10, btype='highpass', fs=2000)
-    x = np.abs(lfilter(b, a, np.cumsum(signals, axis=1))).T
-    x = x / np.expand_dims(np.percentile(x, 10, axis=1), axis=1)
-    x = signal.resample(x, 1200)
-    return jsonify({'data':x.tolist(), 'time':time_list})
+    file_list = sorted(os.path.join(r, fn) for r, ds, fs in os.walk(path) for fn in fs if fn.endswith('npy'))
+    return jsonify({'data': np.load(file_list[random.randint(0,1)]).tolist(), 'time':time_list})
 
 
 
