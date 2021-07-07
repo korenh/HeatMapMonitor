@@ -14,9 +14,12 @@ code {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.main-picker{
-  position: fixed;
-  margin: 10px;
-  z-index: 2;
+.main{
+  display: flex;
+  justify-content: flex-start;
+}
+
+.main-nav{
+  margin: 20px;
   width: 400px;
 }
