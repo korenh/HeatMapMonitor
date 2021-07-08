@@ -14,16 +14,20 @@ def waterfall(file_p):
     # Resample
     x = signal.resample(x, 1000)
     # Normalization
-    #norm = (x-np.amin(x))/(np.amax(x)-np.amin(x))
-    #x = x / norm 
+
+    # [np.abs(np.amax(x)-np.amin(x)) < 0.0000000001]
+    #x /= (x-np.amin(x))/(np.amax(x)-np.amin(x)) 
+
     # Show
     plt.figure(1, figsize=(38.71, 19.485), dpi=100, frameon=False)
-    plt.imshow(x, aspect='auto', norm=LogNorm(.1))
+    plt.imshow(x, aspect='auto')
     plt.axis('off')
-    np.save('./data/sample/20-02-2021_07-20-24.npy', x)
+
+
+    np.save('./data/sample/20-02-2021_07-21-24.npy', x)
     #image_path = './data/{}.png'.format(Path(file_p).stem)
     #plt.savefig(image_path, bbox_inches='tight', pad_inches=0, dpi=100)
-    plt.close('all')
+    #plt.close('all')
 
 if __name__=='__main__':
-    waterfall('./data/data/20-02-2021_07-20-24.npy')
+    waterfall('./data/data/20-02-2021_07-21-24.npy')
