@@ -1,14 +1,16 @@
-import "react-datepicker/dist/react-datepicker.css";
-import { useEffect, useState } from 'react';
-import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"
+import Switch from "@material-ui/core/Switch"
+import { useEffect, useState } from 'react'
+import DatePicker from "react-datepicker"
 import Magnifier from 'react-magnifier'
 import SubImg from './img/icon.png'
-import Plot from 'react-plotly.js';
+import Plot from 'react-plotly.js'
 import axios from 'axios'
 
 export default function App() {
 
   const url = 'http://localhost:5000/'
+  const [live, setLive] = useState(true)
   const [data, setData] = useState([])
   const [shapes, setShapes] = useState([])
   const [time, setTime] = useState([])
@@ -18,16 +20,18 @@ export default function App() {
   const plotLayout = { width: window.innerWidth - 300, height: window.innerHeight, shapes }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      axios.post(`${url}data`, {})
-        .then(res => {
-          setData(res.data.data)
-          setTime(res.data.time)
-          setShapes(res.data.shapes)
-        })
-        .catch(err => console.error(err))
-    }, 10000);
-    return () => clearInterval(interval);
+    if (live) {
+      const interval = setInterval(() => {
+        axios.post(`${url}data`, {})
+          .then(res => {
+            setData(res.data.data)
+            setTime(res.data.time)
+            setShapes(res.data.shapes)
+          })
+          .catch(err => console.error(err))
+      }, 10000)
+      return () => clearInterval(interval);
+    }
   }, []);
 
 
@@ -38,7 +42,10 @@ export default function App() {
   return (
     <div className='main'>
       <div className='main-nav'>
-        <DatePicker selected={date} showTimeSelect dateFormat="Pp" onChange={date => setDate(date.getTime())} /><br /><br />
+        <Switch checked={live} onChange={() => { setLive(!live) }} /><br /><br />
+        {!live ?
+          <DatePicker selected={date} showTimeSelect dateFormat="Pp" onChange={date => setDate(date.getTime())} />
+          : ''}<br /><br />
         <Magnifier src={subImg} width={250} zoomFactor={1.5} />
       </div>
       <Plot data={plotData} layout={plotLayout} onClick={p => get_image(p)} />
