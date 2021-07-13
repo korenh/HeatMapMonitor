@@ -1,12 +1,10 @@
-import os
+import json
 import random
 import numpy as np
-import pandas as pd
-from pathlib import Path
-from flask_cors import CORS
 from time import time
+from pathlib import Path
 from scipy import signal
-from scipy.signal import butter, lfilter
+from flask_cors import CORS
 from datetime import datetime
 from flask.globals import request
 from flask import Flask, jsonify, render_template, send_from_directory
@@ -14,6 +12,11 @@ from flask import Flask, jsonify, render_template, send_from_directory
 app = Flask(__name__, static_folder="client/build/static/",
             template_folder="client/build/")
 CORS(app)
+
+base_path_dt = './data/labels/'
+base_path_wf = './data/sample/'
+date_format = "%d-%m-%Y_%H-%M-%S"
+date_format2 = "%d:%m:%Y|%H:%M:%S"
 
 
 @app.route('/')
@@ -28,41 +31,73 @@ def serve_image(filename):
 
 @app.route('/data', methods=['POST'])
 def data():
+    wf_data, wf_time, wf_labels = get_waterfall(request.json)
+    dt_data, dt_time, dt_labels = get_detections(request.json)
     return jsonify({
-        'data': get_data(request.json), 
-        'time': get_dates(request.json), 
-        'shapes': get_shapes(request.json)
+        'wf': {'data': wf_data,'time': wf_time, 'labels': wf_labels},
+        'dt': {'data': dt_data,'time': dt_time, 'labels': dt_labels}, 
         })
 
 
+def get_waterfall(obj):
+    wf_data, wf_time, wf_labels = [], [], []
+    minutes = 5
 
-def get_data(obj):
-    path = './data/sample/'
-    if 'date_key' in obj.keys():
-        date_key = datetime.fromtimestamp(obj.json['date_key']/1000.0).strftime("%d-%m-%Y")
-    else:
-        file_list = sorted(Path(path).rglob('*.npy')) 
-        data = np.load(file_list[random.randint(0,1)], mmap_mode='r')
-    return data.tolist() 
+    file_list = sorted(Path(base_path_wf).rglob('*.npy'), key=lambda f: datetime.strptime(f.stem, date_format))[-minutes:]
+    time_stamp = int(datetime.strptime(file_list[0].stem, date_format).strftime('%s'))
+    wf_data = waterfall_creation(file_list, 60)
+    wf_time = time_list_creation(len(file_list)*60, time_stamp, 1)
+
+    return wf_data, wf_time, wf_labels
 
 
-def get_dates(obj):
-    time_list_sample = ["2020-09-08_17-11-39", "2020-09-08_17-12-39", "2020-09-08_17-13-39", "2020-09-08_17-14-39", 
-    "2020-09-08_17-15-39","2020-09-08_17-16-39", "2020-09-08_17-17-39","2020-09-08_17-18-39", "2020-09-08_17-19-39", 
-    "2020-09-08_17-20-39","2020-09-08_17-21-39"]
+def get_detections(obj):
+    dt_labels, dt_time, dt_data = [], [], []
+    minutes = 720
+
+    file_list = sorted(Path(base_path_dt).rglob('*.json'), key=lambda f: datetime.strptime(f.stem, date_format))[-minutes:]
+    time_stamp = int(datetime.strptime(file_list[0].stem, date_format).strftime('%s'))
+    dt_labels = detction_convert(file_list, minutes)
+    dt_time = time_list_creation(minutes, time_stamp, 60)
+    dt_data = np.zeros((minutes,1207), dtype='float32')
+       
+    return dt_data.tolist(), dt_time, dt_labels
+
+
+def detection_color(cls):
+    return {1:'yellow', 2:'blue', 3:'green', 4:'pink', 5: 'purple'}.get(cls, 'white')
+
+
+def detction_convert(file_list, proportion):
+    labels = []
+    for f in file_list:
+        with open(f) as d:
+            for idx, label in enumerate(json.load(d)):
+                labels.append({ 
+                    'type': 'rect', 
+                    'x0': label['bbox']['x1'] , 
+                    'y0': (label['bbox']['x1']/proportion)*idx , 
+                    'x1': label['bbox']['x2'] , 
+                    'y1': (label['bbox']['x2']/proportion)*idx ,
+                    'line': { 'color': detection_color(label['cls']) }}) 
+    return labels
+
+
+def time_list_creation(time_range, time_stamp, proportion):
     time_list = []
-    time_stamp = int(time())
-    for i in range(1000):
-        time_list.append(datetime.fromtimestamp(time_stamp+i).strftime("%H:%M:%S"))
+    for i in range(time_range):
+        time_list.append(datetime.fromtimestamp(time_stamp+(i*proportion)).strftime(date_format2))
     return time_list
 
 
-def get_shapes(obj):
-    shapes = [
-    { 'type': 'rect', 'x0': random.randint(50,100), 'y0': 100, 'x1': random.randint(500,1000), 'y1': 300, 'line': { 'color': 'yellow' } },
-    { 'type': 'rect', 'x0': random.randint(100,550), 'y0': 400, 'x1': random.randint(600,800), 'y1': 700, 'line': { 'color': 'blue' } }
-    ]
-    return shapes
+def waterfall_creation(file_list, minutes):
+    waterfall_data = []
+    for f in file_list:
+        if len(waterfall_data) == 0:
+            waterfall_data = np.load(f, mmap_mode='r')
+        else:
+            waterfall_data = np.concatenate((waterfall_data, np.load(f, mmap_mode='r')) , axis=0)
+    return signal.resample(waterfall_data, len(file_list)*minutes ).tolist()
 
 
 if __name__ == "__main__":
