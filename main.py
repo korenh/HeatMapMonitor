@@ -42,11 +42,12 @@ def data():
 def get_waterfall(obj):
     wf_data, wf_time, wf_labels = [], [], []
     minutes = 5
+    resolution = 60
 
-    file_list = sorted(Path(base_path_wf).rglob('*.npy'), key=lambda f: datetime.strptime(f.stem, date_format))[-minutes:]
-    time_stamp = int(datetime.strptime(file_list[0].stem, date_format).strftime('%s'))
-    wf_data = waterfall_creation(file_list, 60)
-    wf_time = time_list_creation(len(file_list)*60, time_stamp, 1)
+    file_list = sorted(Path(base_path_wf).rglob('*.npy'), key=lambda f: datetime.strptime(f.stem, date_format))[-minutes:][::-1]
+    time_stamp = int(datetime.strptime(file_list[minutes-1].stem, date_format).strftime('%s'))
+    wf_data = waterfall_creation(file_list, resolution)
+    wf_time = time_list_creation(minutes*resolution, time_stamp, 1)
 
     return wf_data, wf_time, wf_labels
 
@@ -87,7 +88,7 @@ def time_list_creation(time_range, time_stamp, proportion):
     time_list = []
     for i in range(time_range):
         time_list.append(datetime.fromtimestamp(time_stamp+(i*proportion)).strftime(date_format2))
-    return time_list
+    return time_list[::-1]
 
 
 def waterfall_creation(file_list, minutes):

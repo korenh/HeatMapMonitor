@@ -1,4 +1,5 @@
 import 'react-datepicker/dist/react-datepicker.css'
+import Switch from '@material-ui/core/Switch'
 import { useEffect, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import Magnifier from 'react-magnifier'
@@ -9,6 +10,7 @@ import axios from 'axios'
 export default function App() {
 
   const url = 'http://localhost:5000/'
+  const [live, setLive] = useState(true)
   const [dtLabels, setDtLabels] = useState([])
   const [wfLabels, setWfLabels] = useState([])
   const [subImg, setSubImg] = useState(SubImg)
@@ -21,18 +23,20 @@ export default function App() {
 
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      axios.post(`${url}data`, {})
-        .then(res => {
-          setDtLabels(res.data.dt.labels)
-          setWfLabels(res.data.wf.labels)
-          setPlotDataDT([{ z: res.data.dt.data, y: res.data.dt.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
-          setPlotDataWF([{ z: res.data.wf.data, y: res.data.wf.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
-        })
-        .catch(err => console.error(err))
-    }, 10000)
-    return () => clearInterval(interval);
-  }, []);
+    if (live) {
+      const interval = setInterval(() => {
+        axios.post(`${url}data`, {})
+          .then(res => {
+            setDtLabels(res.data.dt.labels)
+            setWfLabels(res.data.wf.labels)
+            setPlotDataDT([{ z: res.data.dt.data, y: res.data.dt.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
+            setPlotDataWF([{ z: res.data.wf.data, y: res.data.wf.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
+          })
+          .catch(err => console.error(err))
+      }, 10000)
+      return () => clearInterval(interval);
+    }
+  }, [live]);
 
 
   const get_image = (p) => {
@@ -41,11 +45,17 @@ export default function App() {
     setSubImg(`${url}image/${img_url}`)
   }
 
+  const get_static_data = (date) => {
+    let timestamp = date.getTime()
+    setDate(date)
+  }
+
   return (
     <div className='main'>
       <div className='main-nav'>
         <div className='main-nav-sub'>
-          <DatePicker selected={date} showTimeSelect dateFormat="Pp" onChange={date => setDate(date.getTime())} />
+          <Switch checked={live} onChange={() => setLive(!live)} />
+          {live ? '' : (<DatePicker selected={date} showTimeSelect dateFormat="Pp" onChange={date => get_static_data(date)} />)}
         </div>
         <Magnifier src={subImg} width={250} zoomFactor={1.5} />
       </div>

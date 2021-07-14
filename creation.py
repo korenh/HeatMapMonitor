@@ -15,11 +15,17 @@ def creation(f):
     x = signal.resample(x, 1000)
     min_v = .1
     x[x > min_v] = np.log2((x[x > min_v]-min_v)/(np.amax(x[x > min_v])-min_v))
-    # x = np.flipud(x)
+    x = np.flipud(x)
+    #plt.figure(1, figsize=(38.71, 19.485), dpi=100, frameon=False)
+    #plt.imshow(x, aspect='auto', norm=LogNorm(.1))
+    #plt.axis('off')
+    #plt.show()
     np.save('./data/sample/{}.npy'.format(f.stem), x)
+    
     
 if __name__=='__main__':
     f_list = sorted(Path('./data/data').glob('*.npy'), key=lambda f: datetime.strptime(f.stem,  "%d-%m-%Y_%H-%M-%S"))
     for f in f_list:
         print(f)
         creation(f)
+    # creation(f_list[9])
