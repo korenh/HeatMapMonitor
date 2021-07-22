@@ -15,7 +15,7 @@ CORS(app)
 base_path_dt = './data/labels/'
 date_format = "%d-%m-%Y_%H-%M-%S"
 date_format2 = "%d:%m:%Y|%H:%M:%S"
-
+minute_range = 120000
 
 @app.route('/')
 def main():
@@ -30,14 +30,12 @@ def serve_image(filename):
 @app.route('/data', methods=['POST'])
 def data():
     dt_data, dt_time, dt_labels = detections(request.json)
-    return jsonify({
-        'dt': {'data': dt_data,'time': dt_time, 'labels': dt_labels}, 
-        })
+    return jsonify({'dt': {'data': dt_data,'time': dt_time, 'labels': dt_labels}})
 
 
 def detections(obj):
     dt_labels, dt_time, dt_data = [], [], []
-    minutes = 720
+    minutes = obj['range']
 
     file_list = sorted(Path(base_path_dt).rglob('*.json'), key=lambda f: datetime.strptime(f.stem, date_format))[-minutes:]
     time_stamp = int(datetime.strptime(file_list[0].stem, date_format).strftime('%s'))
@@ -48,17 +46,17 @@ def detections(obj):
     return dt_data, dt_time, dt_labels
 
 
-def detctions_convert(file_list, proportion):
+def detctions_convert(file_list, minutes):
     labels = []
-    for f in file_list:
+    for idx, f in  enumerate(file_list, start=1):
         with open(f) as d:
-            for idx, label in enumerate(json.load(d)):
+            for label in json.load(d):
                 labels.append({ 
                     'type': 'rect', 
                     'x0': label['bbox']['x1'] , 
-                    'y0': (label['bbox']['x1']/proportion)*idx , 
+                    'y0': ((label['bbox']['y1']/minute_range)*idx), 
                     'x1': label['bbox']['x2'] , 
-                    'y1': (label['bbox']['x2']/proportion)*idx ,
+                    'y1': ((label['bbox']['y2']/minute_range)*idx),
                     'line': { 'color': {1:'yellow', 2:'blue', 3:'green', 4:'pink', 5: 'purple'}.get(label['cls'], 'white')}}) 
     return labels
 
