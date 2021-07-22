@@ -1,7 +1,5 @@
-import 'react-datepicker/dist/react-datepicker.css'
-import Switch from '@material-ui/core/Switch'
+import { TextField, Switch } from '@material-ui/core';
 import { useEffect, useState } from 'react'
-import DatePicker from 'react-datepicker'
 import Magnifier from 'react-magnifier'
 import SubImg from './img/icon.png'
 import Plot from 'react-plotly.js'
@@ -12,14 +10,15 @@ export default function App() {
   const url = 'http://localhost:5000/'
   const [live, setLive] = useState(true)
   const [dtLabels, setDtLabels] = useState([])
-  const [wfLabels, setWfLabels] = useState([])
   const [subImg, setSubImg] = useState(SubImg)
   const [date, setDate] = useState(new Date())
   const [plotDataDT, setPlotDataDT] = useState([])
-  const [plotDataWF, setPlotDataWF] = useState([])
   const W = { w: window.innerWidth, h: window.innerHeight }
-  const plotLayoutDT = { width: W.w - 300, height: W.h * 0.6, margin: { l: 150, r: 0, b: 30, t: 20, pad: 0 }, shapes: dtLabels }
-  const plotLayoutWF = { width: W.w - 300, height: W.h * 0.4, margin: { l: 150, r: 0, b: 30, t: 0, pad: 0 }, shapes: wfLabels }
+  const timeRange = ['5m', '30m', '1h', '5h', '12h']
+  const plotLayoutDT = {
+    width: W.w - 300, height: W.h, margin: { l: 150, r: 0, b: 30, t: 20, pad: 0 }, shapes: dtLabels,
+    paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', xaxis: { color: 'black' }, yaxis: { color: 'black' }
+  }
 
 
   useEffect(() => {
@@ -28,9 +27,7 @@ export default function App() {
         axios.post(`${url}data`, {})
           .then(res => {
             setDtLabels(res.data.dt.labels)
-            setWfLabels(res.data.wf.labels)
             setPlotDataDT([{ z: res.data.dt.data, y: res.data.dt.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
-            setPlotDataWF([{ z: res.data.wf.data, y: res.data.wf.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
           })
           .catch(err => console.error(err))
       }, 10000)
@@ -45,24 +42,17 @@ export default function App() {
     setSubImg(`${url}image/${img_url}`)
   }
 
-  const get_static_data = (date) => {
-    let timestamp = date.getTime()
-    setDate(date)
-  }
-
   return (
     <div className='main'>
       <div className='main-nav'>
         <div className='main-nav-sub'>
-          <Switch checked={live} onChange={() => setLive(!live)} />
-          {live ? '' : (<DatePicker selected={date} showTimeSelect dateFormat="Pp" onChange={date => get_static_data(date)} />)}
+          <Switch checked={live} onChange={() => setLive(!live)} color={'black'} />
+          {live ? '' : (<TextField type="datetime-local" />)}<br /><br />
+          {timeRange.map(t => (<span className='btn-range'>{t}</span>))}
         </div>
         <Magnifier src={subImg} width={250} zoomFactor={1.5} />
       </div>
-      <div>
-        <Plot data={plotDataDT} layout={plotLayoutDT} onClick={p => get_image(p)} />
-        <Plot data={plotDataWF} layout={plotLayoutWF} />
-      </div>
+      <Plot data={plotDataDT} layout={plotLayoutDT} onClick={p => get_image(p)} />
     </div>
   );
 }
