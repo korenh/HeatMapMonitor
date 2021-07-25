@@ -13,9 +13,6 @@ app = Flask(__name__, static_folder="client/build/static/",
 CORS(app)
 
 base_path_dt = './data/labels/'
-date_format = "%d-%m-%Y_%H-%M-%S"
-date_format2 = "%d:%m:%Y|%H:%M:%S"
-minute_range = 120000
 
 @app.route('/')
 def main():
@@ -35,9 +32,11 @@ def data():
 
 def detections(obj):
     dt_labels, dt_time, dt_data = [], [], []
+    date_format = "%d-%m-%Y_%H-%M-%S"
     minutes = obj['range']
 
-    file_list = sorted(Path(base_path_dt).rglob('*.json'), key=lambda f: datetime.strptime(f.stem, date_format))[-minutes:]
+
+    file_list = sorted(Path(base_path_dt).rglob('*.json'), key=lambda f: datetime.strptime(f.stem, date_format))[:minutes]
     time_stamp = int(datetime.strptime(file_list[0].stem, date_format).strftime('%s'))
     dt_labels = detctions_convert(file_list, minutes)
     dt_time = detctions_time(minutes, time_stamp, 60)
@@ -54,9 +53,9 @@ def detctions_convert(file_list, minutes):
                 labels.append({ 
                     'type': 'rect', 
                     'x0': label['bbox']['x1'] , 
-                    'y0': ((label['bbox']['y1']/minute_range)*idx), 
+                    'y0': ((label['bbox']['y1']/120000)*idx), 
                     'x1': label['bbox']['x2'] , 
-                    'y1': ((label['bbox']['y2']/minute_range)*idx),
+                    'y1': ((label['bbox']['y2']/120000)*idx),
                     'line': { 'color': {1:'yellow', 2:'blue', 3:'green', 4:'pink', 5: 'purple'}.get(label['cls'], 'white')}}) 
     return labels
 
@@ -64,7 +63,7 @@ def detctions_convert(file_list, minutes):
 def detctions_time(time_range, time_stamp, proportion):
     time_list = []
     for i in range(time_range):
-        time_list.append(datetime.fromtimestamp(time_stamp+(i*proportion)).strftime(date_format2))
+        time_list.append(datetime.fromtimestamp(time_stamp+(i*proportion)).strftime('%d:%m:%Y|%H:%M:%S'))
     return time_list
 
 
