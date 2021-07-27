@@ -12,8 +12,6 @@ app = Flask(__name__, static_folder="client/build/static/",
             template_folder="client/build/")
 CORS(app)
 
-base_path_dt = './data/labels/'
-
 @app.route('/')
 def main():
     return render_template('index.html')
@@ -33,8 +31,8 @@ def data():
 def detections(obj):
     dt_labels, dt_time, dt_data = [], [], []
     date_format = "%d-%m-%Y_%H-%M-%S"
+    base_path_dt = './data/labels/'
     minutes = obj['range']
-
 
     file_list = sorted(Path(base_path_dt).rglob('*.json'), key=lambda f: datetime.strptime(f.stem, date_format))[:minutes]
     time_stamp = int(datetime.strptime(file_list[0].stem, date_format).strftime('%s'))
@@ -46,16 +44,17 @@ def detections(obj):
 
 
 def detctions_convert(file_list, minutes):
+    # values over (Y axis) !
     labels = []
-    for idx, f in  enumerate(file_list, start=1):
+    for idx, f in  enumerate(file_list, start=0):
         with open(f) as d:
             for label in json.load(d):
                 labels.append({ 
                     'type': 'rect', 
                     'x0': label['bbox']['x1'] , 
-                    'y0': ((label['bbox']['y1']/120000)*idx), 
+                    'y0': (label['bbox']['y1']/120000)+idx-0.5,
                     'x1': label['bbox']['x2'] , 
-                    'y1': ((label['bbox']['y2']/120000)*idx),
+                    'y1': (label['bbox']['y2']/120000)+idx-0.5,
                     'line': { 'color': {1:'yellow', 2:'blue', 3:'green', 4:'pink', 5: 'purple'}.get(label['cls'], 'white')}}) 
     return labels
 
