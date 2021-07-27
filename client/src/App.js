@@ -12,9 +12,14 @@ export default function App() {
   const [dtLabels, setDtLabels] = useState([])
   const [subImg, setSubImg] = useState(SubImg)
   const [plotDataDT, setPlotDataDT] = useState([])
+  const [plotDataMP, setPlotDataMP] = useState([])
   const [range, setRange] = useState('12h')
   const W = { w: window.innerWidth, h: window.innerHeight }
   const timeRange = ['5m', '30m', '1h', '5h', '12h']
+  const plotLayoutMP = {
+    width: 250, height: 200, margin: { l: 0, r: 0, b: 0, t: 0, pad: 0 },
+    paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5'
+  }
   const plotLayoutDT = {
     width: W.w - 300, height: W.h, margin: { l: 150, r: 10, b: 25, t: 25, pad: 0 }, shapes: dtLabels,
     paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', xaxis: { color: 'black' }, yaxis: { color: 'black' }
@@ -32,6 +37,7 @@ export default function App() {
       .then(res => {
         setDtLabels(res.data.dt.labels)
         setPlotDataDT([{ z: res.data.dt.data, y: res.data.dt.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
+        setPlotDataMP([{ type: 'scattergeo' }])
       })
       .catch(err => console.error(err))
   }
@@ -70,6 +76,7 @@ export default function App() {
           {timeRange.map(t => (t === range ? <span className='btn-range-selected'>{t}</span> :
             <span className='btn-range' onClick={() => setRange(t)}>{t}</span>))}
         </div>
+        <Plot data={plotDataMP} layout={plotLayoutMP} />
         <Magnifier src={subImg} width={250} zoomFactor={1.5} />
       </div>
       <Plot data={plotDataDT} layout={plotLayoutDT} onClick={p => get_image(p)} />
