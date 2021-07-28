@@ -1,16 +1,27 @@
+import os
 import json
 import random
 import numpy as np
 from time import time
 from pathlib import Path
 from flask_cors import CORS
-from datetime import datetime
 from flask.globals import request
+from datetime import datetime as dt
 from flask import Flask, jsonify, render_template, send_from_directory
 
 app = Flask(__name__, static_folder="client/build/static/",
             template_folder="client/build/")
 CORS(app)
+
+if 'single_path' and 'label_path' and 'db' in os.environ:
+    db = os.environ['db']
+    single_path = os.environ['single_path']
+    label_path = os.environ['label_path']
+else:
+    single_path = './data/single/'
+    label_path = './data/labels2/'
+    db = False
+
 
 @app.route('/')
 def main():
@@ -18,8 +29,8 @@ def main():
 
 
 @app.route('/image/<path:filename>')
-def serve_image(filename):
-    return send_from_directory('./data/images', filename)
+def single(filename):
+    return send_from_directory(single_path, filename)
 
 
 @app.route('/data', methods=['POST'])
@@ -29,21 +40,17 @@ def data():
 
 
 def detections(obj):
-    dt_labels, dt_time, dt_data = [], [], []
-    date_format = "%d-%m-%Y_%H-%M-%S"
-    base_path_dt = './data/labels/'
-    minutes = obj['range']
-
-    file_list = sorted(Path(base_path_dt).rglob('*.json'), key=lambda f: datetime.strptime(f.stem, date_format))[:minutes]
-    time_stamp = int(datetime.strptime(file_list[0].stem, date_format).strftime('%s'))
-    dt_labels = detctions_convert(file_list, minutes)
-    dt_time = detctions_time(minutes, time_stamp, 60)
-    dt_data = np.zeros((minutes,1207), dtype='float32').tolist()
-       
+    dt_data = np.zeros((obj['range'],1207), dtype='float32').tolist()
+    if db:
+        pass
+    else:
+        file_list = sorted(Path(label_path).rglob('*.json'), key=lambda f: dt.strptime(f.stem, "%d-%m-%Y_%H-%M-%S"))[-obj['range']:]
+        dt_labels = static_detections_convert(file_list)
+        dt_time = static_detections_time(file_list)
     return dt_data, dt_time, dt_labels
 
 
-def detctions_convert(file_list, minutes):
+def static_detections_convert(file_list):
     # values over (Y axis) !
     labels = []
     for idx, f in  enumerate(file_list, start=0):
@@ -59,11 +66,12 @@ def detctions_convert(file_list, minutes):
     return labels
 
 
-def detctions_time(time_range, time_stamp, proportion):
+def static_detections_time(file_list):
     time_list = []
-    for i in range(time_range):
-        time_list.append(datetime.fromtimestamp(time_stamp+(i*proportion)).strftime('%d:%m:%Y|%H:%M:%S'))
+    for f in file_list:
+        time_list.append(f.stem)
     return time_list
+
 
 
 if __name__ == "__main__":

@@ -13,15 +13,7 @@ export default function App() {
   const [dtLabels, setDtLabels] = useState([])
   const [subImg, setSubImg] = useState(SubImg)
   const [plotDataDT, setPlotDataDT] = useState([])
-  const [plotDataMP, setPlotDataMP] = useState([])
-  const timeRange = ['5m', '30m', '1h', '5h', '12h']
-  const plotLayoutMP = {
-    width: 250, height: 200, margin: { l: 0, r: 0, b: 0, t: 0, pad: 0 }, paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5',
-    geo: {
-      scope: 'asia', showrivers: true, rivercolor: '#F5F5F5', showlakes: true, lakecolor: '#F5F5F5', showsubunits: true,
-      showland: true, landcolor: '#EAEAAE', countrycolor: '#d3d3d3', countrywidth: 1.5, subunitcolor: '#d3d3d3', bgcolor: '#F5F5F5'
-    }
-  }
+  const timeRange = ['5m', '30m', '1h', '5h', '12h', '24h']
   const plotLayoutDT = {
     width: window.innerWidth - 300, height: window.innerHeight, margin: { l: 150, r: 10, b: 25, t: 25, pad: 0 }, shapes: dtLabels,
     paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', xaxis: { color: 'black' }, yaxis: { color: 'black' }
@@ -38,8 +30,10 @@ export default function App() {
     axios.post(`${url}/data`, { range: get_minute(range), timestamp })
       .then(res => {
         setDtLabels(res.data.dt.labels)
-        setPlotDataMP([{ type: 'scattergeo' }])
-        setPlotDataDT([{ z: res.data.dt.data, y: res.data.dt.time, type: 'heatmap', colorscale: 'Viridis', showscale: false }])
+        setPlotDataDT([{
+          z: res.data.dt.data, y: res.data.dt.time, type: 'heatmap',
+          colorscale: [['0', '#F5F5F5'], ['1', '#F5F5F5']], showscale: false
+        }])
       })
       .catch(err => console.error(err))
   }
@@ -54,15 +48,15 @@ export default function App() {
         return 60
       case '5h':
         return 300
-      default:
+      case '12h':
         return 720
+      default:
+        return 1440
     }
   }
 
   const get_image = (p) => {
-    let img_url = `${p.points[0].y}/${p.points[0].y}_${p.points[0].x.toString().padStart(4, 0)}.png`
-    img_url = img_url.replaceAll('|', '_').replaceAll(':', '-')
-    setSubImg(`${url}/image/${img_url}`)
+    setSubImg(`${url}/image/${p.points[0].y}/${p.points[0].y}_${p.points[0].x.toString().padStart(4, 0)}.png`)
   }
 
   return (
@@ -76,7 +70,6 @@ export default function App() {
             <span className='btn-range-selected'>{t}</span> : <span className='btn-range' onClick={() => setRange(t)}>{t}</span>
           ))}
         </div>
-        <Plot data={plotDataMP} layout={plotLayoutMP} />
         <Magnifier src={subImg} width={250} zoomFactor={1.5} />
       </div>
       <Plot data={plotDataDT} layout={plotLayoutDT} onClick={p => get_image(p)} />
