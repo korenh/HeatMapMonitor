@@ -14,19 +14,22 @@ app = Flask(__name__, static_folder="client/build/static/",
             template_folder="client/build/")
 CORS(app)
 
-if 'single_path' and 'label_path' and 'db' in os.environ:
+if 'single_path' and 'label_path' and 'db' and 'mongo_url' and 'collection' in os.environ:
     db = os.environ['db']
+    mongo_url = os.environ['mongo_url']
     single_path = os.environ['single_path']
     label_path = os.environ['label_path']
+    coll = os.environ['collection']
 else:
+    db = False
+    mongo_url = 'mongodb://localhost:27017'
     single_path = './data/single/'
     label_path = './data/labels2/'
-    db = False
+    coll = 'test2'
 
 if db:
-    client = MongoClient('mongodb://localhost:27017')
-    database = client['db']
-    collection = database['test2']
+    collection = MongoClient(mongo_url)['db'][coll]
+
 
 @app.route('/')
 def main():
