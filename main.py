@@ -21,7 +21,7 @@ if 'single_path' and 'label_path' and 'db' in os.environ:
 else:
     single_path = './data/single/'
     label_path = './data/labels2/'
-    db = True
+    db = False
 
 if db:
     client = MongoClient('mongodb://localhost:27017')
@@ -49,13 +49,13 @@ def detections(obj):
     if db:
         dt_labels, dt_time = online_detections(obj['range'])
     else:
-        file_list = sorted(Path(label_path).rglob('*.json'), key=lambda f: dt.strptime(f.stem, "%d-%m-%Y_%H-%M-%S"))[-obj['range']:]
-        dt_labels, dt_time = static_detections(file_list)
+        dt_labels, dt_time = static_detections(obj['range'])
     return dt_data, dt_time, dt_labels
 
 
-def static_detections(file_list):
+def static_detections(n):
     labels, times = [], []
+    file_list = sorted(Path(label_path).rglob('*.json'), key=lambda f: dt.strptime(f.stem, "%d-%m-%Y_%H-%M-%S"))[-n:]
     for idx, file in  enumerate(file_list, start=0):
         times.append(file.stem)
         with open(file) as d:
@@ -66,6 +66,8 @@ def static_detections(file_list):
 
 def online_detections(n):
     labels, times = [], []
+    if collection.count() < n:
+        n = collection.count()
     for idx, l in enumerate(collection.find().skip(collection.count() - n)): 
         times.append(l['_id'])
         for label in l['result']:
