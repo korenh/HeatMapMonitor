@@ -5,7 +5,7 @@ from datetime import datetime as dt
 
 client = MongoClient('mongodb://localhost:27017')
 database = client['db']
-collection = database['test']
+collection = database['test2']
 
 def file_map(path):
     return sorted(path.rglob('*.json'), key=lambda f: dt.strptime(f.stem, "%d-%m-%Y_%H-%M-%S"))
@@ -36,17 +36,28 @@ def mongo_insert(name, data):
     )
 
 
-def mongo_get_data(id=''):
-    if id == '':
-        for l in collection.find({}): 
-            print(l)
-            exit(-1)
+def mongo_get_data():
+    labels = []
+    times = []
+    for idx, l in enumerate(collection.find().skip(collection.count() - 2)): 
+        times.append(l['_id'])
+        for label in l['result']:
+            labels.append({ 
+                'type': 'rect', 
+                'x0': label['bbox']['x1'] , 
+                'y0': (label['bbox']['y1']/120000)+idx-0.5,
+                'x1': label['bbox']['x2'] , 
+                'y1': (label['bbox']['y2']/120000)+idx-0.5,
+                'line': { 'color': {1:'yellow', 2:'blue', 3:'green', 4:'pink', 5: 'purple'}.get(label['cls'], 'white')}}) 
+    print(labels)
+
+
 
 
 if __name__ == "__main__":
     
-    path = Path('./data/labels2')
-    file_list = file_map(path)
-    file_loop(file_list)
+    # path = Path('./data/labels2')
+    # file_list = file_map(path)
+    # file_loop(file_list)
 
-    # mongo_get_data()
+    mongo_get_data()
