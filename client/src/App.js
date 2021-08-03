@@ -1,5 +1,6 @@
-import { TextField, Switch } from '@material-ui/core';
+import DateTimePicker from 'react-datetime-picker';
 import { useEffect, useState } from 'react'
+import { Switch } from '@material-ui/core'
 import Magnifier from 'react-magnifier'
 import SubImg from './img/icon.png'
 import Plot from 'react-plotly.js'
@@ -13,6 +14,7 @@ export default function App() {
   const [dtLabels, setDtLabels] = useState([])
   const [subImg, setSubImg] = useState(SubImg)
   const [plotDataDT, setPlotDataDT] = useState([])
+  const [value, onChange] = useState(new Date())
   const timeRange = ['5m', '30m', '1h', '5h', '12h', '24h']
   const plotLayoutDT = {
     width: window.innerWidth - 300, height: window.innerHeight, margin: { l: 150, r: 10, b: 25, t: 25, pad: 0 }, shapes: dtLabels,
@@ -64,8 +66,13 @@ export default function App() {
       <div className='main-nav'>
         <div className='main-nav-sub'>
           <Switch checked={live} onChange={() => setLive(!live)} color={'black'} />
-          {live ? '' : <TextField type="datetime-local" onChange={t => get_data(t.timeStamp)} />}
-          <br /><br />
+          {live ? '' :
+            <div>
+              <DateTimePicker onChange={onChange} value={value} />
+              <button className='btn-range' onClick={() => get_data(value.getTime())}>Get</button>
+            </div>
+          }
+          <br />
           {timeRange.map(t => (t === range ?
             <span className='btn-range-selected'>{t}</span> : <span className='btn-range' onClick={() => setRange(t)}>{t}</span>
           ))}
