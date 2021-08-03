@@ -4,6 +4,7 @@ import random
 import numpy as np
 from time import time
 from pathlib import Path
+from waitress import serve
 from flask_cors import CORS
 from pymongo import MongoClient
 from flask.globals import request
@@ -22,14 +23,14 @@ if 'single_path' and 'label_path' and 'db' and 'mongo_url' and 'collection' in o
     label_path = os.environ['label_path']
     coll = os.environ['collection']
 else:
-    db = True
+    db = 'static'
     mongo_url = 'mongodb://localhost:27017'
     dt_format = '%d-%m-%Y_%H-%M-%S'
     single_path = './data/single/'
     label_path = './data/labels2/'
     coll = 'test2'
 
-if db:
+if db == 'db':
     collection = MongoClient(mongo_url)['db'][coll]
 
 
@@ -52,7 +53,7 @@ def data():
 def detections(obj):
     dt_data = np.zeros((obj['range'],1207), dtype='float32').tolist()
 
-    if db:
+    if db == 'db':
         dt_labels, dt_time = online_detections(obj['range'], obj['timestamp'])
     else:
         dt_labels, dt_time = static_detections(obj['range'], obj['timestamp'])
@@ -105,4 +106,4 @@ def detections_convert(label, idx):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    serve(app)

@@ -8,7 +8,7 @@ import axios from 'axios'
 
 export default function App() {
 
-  const url = 'http://localhost:5000'
+  const url = 'http://localhost:8080'
   const [live, setLive] = useState(true)
   const [range, setRange] = useState('12h')
   const [dtLabels, setDtLabels] = useState([])
