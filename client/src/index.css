@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: #f5f5f5;
@@ -8,7 +8,8 @@ body {
 
 *{
   outline: none;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  border-radius: 5px;
 }
 
 code {
@@ -26,10 +27,9 @@ code {
 }
 
 .main-nav-sub{
-  border-radius: 5px;
   margin-bottom: 15px;
   padding: 5px;
-  height: calc(100vh - 350px);
+  height: calc(100vh - 600px);
 }
 
 .btn-range{
@@ -37,17 +37,15 @@ code {
   padding: 5px;
   margin-right: 3px;
   border: 1px solid black;
-  border-radius: 10px;
   cursor: pointer;
   outline: none;
+  background: none;
 }
-
 
 .btn-range-selected{
   padding: 5px;
   margin-right: 5px;
   background: black;
   color: white;
-  border-radius: 10px;
   cursor: pointer;
 }
