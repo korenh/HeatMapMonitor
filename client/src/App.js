@@ -29,6 +29,7 @@ export default function App() {
     }
   }, [live, range])
 
+
   const fetchData = (timestamp = '') => {
     axios.post(`${url}/data`, { range: rangeToMinutes(range), timestamp })
       .then(res => {
@@ -37,6 +38,7 @@ export default function App() {
       })
       .catch(err => console.error(err))
   }
+
 
   const rangeToMinutes = (t) => {
     switch (t) {
@@ -54,6 +56,7 @@ export default function App() {
         return 1440
     }
   }
+
 
   return (
     <div className='main'>
@@ -96,7 +99,7 @@ export const PiePlot = ({ dtLabels }) => {
 
   useEffect(() => {
     let dataSplit = { 'yellow': 0, 'blue': 0, 'green': 0, 'pink': 0, 'purple': 0 }
-    dtLabels.map(label => { dataSplit[label.line.color] += 1 })
+    dtLabels.forEach(label => { dataSplit[label.line.color] += 1 })
     setColors(dataSplit)
   }, [dtLabels])
 
