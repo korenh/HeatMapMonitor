@@ -17,6 +17,7 @@ export default function App() {
   const [live, setLive] = useState(true)
   const [sensor, setSensor] = useState('')
   const [dataDT, setDataDT] = useState([])
+  const [timeDT, setTimeDT] = useState([])
   const [range, setRange] = useState('12h')
   const [dtLabels, setDtLabels] = useState([])
   const [subImg, setSubImg] = useState(SubImg)
@@ -33,6 +34,7 @@ export default function App() {
   const fetchData = (timestamp = '') => {
     axios.post(`${url}/data`, { range: rangeToMinutes(range), timestamp })
       .then(res => {
+        setTimeDT(res.data.dt.time)
         setDtLabels(res.data.dt.labels)
         setDataDT([{ z: res.data.dt.data, y: res.data.dt.time, type: 'heatmap', colorscale: [['0', '#F5F5F5'], ['1', '#F5F5F5']], showscale: false }])
       })
@@ -66,11 +68,14 @@ export default function App() {
           <RangeSelect range={range} setRange={setRange} />
           <DateSelect live={live} fetchData={fetchData} />
         </div>
-        <PiePlot dtLabels={dtLabels} />
         <Magnifier src={subImg} width={250} />
+        <PiePlot dtLabels={dtLabels} />
       </div>
       <Keyboard setSubImg={setSubImg} setSensor={setSensor} date={date} sensor={sensor} url={url} />
-      <MainPlot dataDT={dataDT} dtLabels={dtLabels} setSubImg={setSubImg} url={url} setDate={setDate} setSensor={setSensor} />
+      <div>
+        <MainPlot dataDT={dataDT} dtLabels={dtLabels} setSubImg={setSubImg} url={url} setDate={setDate} setSensor={setSensor} />
+        <LinePlot dtLabels={dtLabels} timeDT={timeDT} />
+      </div>
     </div>
   )
 }
@@ -79,7 +84,7 @@ export default function App() {
 export const MainPlot = ({ dataDT, dtLabels, setSubImg, url, setDate, setSensor }) => {
 
   const plotLayoutDT = {
-    width: window.innerWidth - 300, height: window.innerHeight, margin: { l: 150, r: 10, b: 25, t: 25, pad: 0 }, shapes: dtLabels,
+    width: window.innerWidth - 300, height: window.innerHeight * 0.9, margin: { l: 150, r: 10, b: 25, t: 25, pad: 0 }, shapes: dtLabels,
     paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', xaxis: { color: 'black' }, yaxis: { color: 'black' }
   }
 
@@ -104,16 +109,35 @@ export const PiePlot = ({ dtLabels }) => {
   }, [dtLabels])
 
   const plotDataPIE = [{
-    values: Object.keys(colors).map(key => { return colors[key] }), labels: Object.keys(colors), type: 'pie',
-    marker: { colors: ['yellow', 'blue', 'green', 'pink', 'purple',] }
+    y: Object.keys(colors).map(key => { return colors[key] }), x: Object.keys(colors), type: 'bar',
+    marker: { color: ['yellow', 'blue', 'green', 'pink', 'purple',] }
   }]
 
   const plotLayoutPIE = {
-    width: 250, height: 200, margin: { l: 0, r: 0, b: 20, t: 0, pad: 0 },
+    width: 250, height: 270, margin: { l: 0, r: 0, b: 20, t: 40, pad: 0 },
     paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', showlegend: false
   }
 
   return <Plot data={plotDataPIE} layout={plotLayoutPIE} />
+}
+
+
+export const LinePlot = ({ dtLabels, timeDT }) => {
+
+  const [counts, setCounts] = useState([])
+
+  useEffect(() => {
+    let dataSplit = {}
+    dtLabels.forEach((label) => { dataSplit[Math.trunc(label.y1)] = (dataSplit[Math.trunc(label.y1)] || 0) + 1 });
+    setCounts([{ x: timeDT, y: Object.keys(dataSplit).map(key => { return dataSplit[key] }), type: 'scatter', line: { color: 'blue' } }])
+  }, [dtLabels, timeDT])
+
+  const plotLayoutLI = {
+    width: window.innerWidth - 300, height: window.innerHeight * 0.1, margin: { l: 0, r: 0, b: 20, t: 0, pad: 0 },
+    paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', xaxis: { showgrid: false, showticklabels: false }, yaxis: { showgrid: false }
+  }
+
+  return <Plot data={counts} layout={plotLayoutLI} />
 }
 
 

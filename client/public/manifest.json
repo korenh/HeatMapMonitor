@@ -1,6 +1,6 @@
 {
-  "short_name": "HeatMap",
-  "name": "HeatMap",
+  "short_name": "HeatMapMonitor",
+  "name": "HeatMapMonitor",
   "icons": [
     {
       "src": "favicon.ico",
