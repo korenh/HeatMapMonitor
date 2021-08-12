@@ -60,6 +60,16 @@ export default function App() {
   }
 
 
+  const validImage = (url) => {
+    let img = new Image()
+    img.src = url
+    if (img.height !== 0) {
+      return true
+    }
+    return false
+  }
+
+
   return (
     <div className='main'>
       <div className='main-nav'>
@@ -71,9 +81,9 @@ export default function App() {
         <Magnifier src={subImg} width={250} />
         <PiePlot dtLabels={dtLabels} />
       </div>
-      <Keyboard setSubImg={setSubImg} setSensor={setSensor} date={date} sensor={sensor} url={url} />
+      <Keyboard setSubImg={setSubImg} setSensor={setSensor} date={date} sensor={sensor} url={url} validImage={validImage} />
       <div>
-        <MainPlot dataDT={dataDT} dtLabels={dtLabels} setSubImg={setSubImg} url={url} setDate={setDate} setSensor={setSensor} />
+        <MainPlot dataDT={dataDT} dtLabels={dtLabels} setSubImg={setSubImg} url={url} setDate={setDate} setSensor={setSensor} validImage={validImage} />
         <LinePlot dtLabels={dtLabels} timeDT={timeDT} />
       </div>
     </div>
@@ -81,7 +91,7 @@ export default function App() {
 }
 
 
-export const MainPlot = ({ dataDT, dtLabels, setSubImg, url, setDate, setSensor }) => {
+export const MainPlot = ({ dataDT, dtLabels, setSubImg, url, setDate, setSensor, validImage }) => {
 
   const plotLayoutDT = {
     width: window.innerWidth - 300, height: window.innerHeight * 0.9, margin: { l: 150, r: 10, b: 25, t: 25, pad: 0 }, shapes: dtLabels,
@@ -91,7 +101,10 @@ export const MainPlot = ({ dataDT, dtLabels, setSubImg, url, setDate, setSensor 
   const get_image = (p) => {
     setDate(p.points[0].y)
     setSensor(p.points[0].x)
-    setSubImg(`${url}/image/${p.points[0].y}/${p.points[0].y}_${p.points[0].x.toString().padStart(4, 0)}.png`)
+    url = `${url}/image/${p.points[0].y}/${p.points[0].y}_${p.points[0].x.toString().padStart(4, 0)}.png`
+    if (validImage(url)) {
+      setSubImg(url)
+    }
   }
 
   return <Plot data={dataDT} layout={plotLayoutDT} onClick={p => get_image(p)} />
@@ -180,18 +193,24 @@ export const DateSelect = ({ live, fetchData }) => {
 }
 
 
-export const Keyboard = ({ setSubImg, setSensor, date, sensor, url }) => {
+export const Keyboard = ({ setSubImg, setSensor, date, sensor, url, validImage }) => {
 
   return <div>
     <KeyboardEventHandler
       handleKeys={['left', 'right']}
       onKeyEvent={(key, e) => {
         if (key === 'right') {
-          setSubImg(`${url}/image/` + date + '/' + date + '_' + (parseInt(sensor) + 1).toString().padStart(4, 0) + '.png')
+          let image = `${url}/image/` + date + '/' + date + '_' + (parseInt(sensor) + 1).toString().padStart(4, 0) + '.png'
+          if (validImage(image)) {
+            setSubImg(image)
+          }
           setSensor((parseInt(sensor) + 1).toString().padStart(4, 0))
         }
         if (key === 'left') {
-          setSubImg(`${url}/image/` + date + '/' + date + '_' + (parseInt(sensor) - 1).toString().padStart(4, 0) + '.png')
+          let image = `${url}/image/` + date + '/' + date + '_' + (parseInt(sensor) - 1).toString().padStart(4, 0) + '.png'
+          if (validImage(url)) {
+            setSubImg(image)
+          }
           setSensor((parseInt(sensor) - 1).toString().padStart(4, 0))
         }
       }
