@@ -16,3 +16,4 @@ yarn-error.log*
 /data
 .idea
 /DataSample
+__pycache__
