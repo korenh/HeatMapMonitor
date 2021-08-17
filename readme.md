@@ -14,7 +14,7 @@ npm run build
 
 # Run server
 pip install {dependencies}
-python main.py
+python server.py
 
 # Docker mongo
 docker run -d --name mongo -p 27017:27017 mongo:4.1.1
