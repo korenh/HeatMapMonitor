@@ -1,3 +1,4 @@
+""" @author: koren hamra """
 import os
 from pymongo import MongoClient
 

@@ -1,3 +1,4 @@
+""" @author: koren hamra """
 import json
 from pathlib import Path
 from pymongo import MongoClient
