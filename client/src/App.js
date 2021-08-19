@@ -1,13 +1,15 @@
-import KeyboardEventHandler from 'react-keyboard-event-handler'
-import DateTimePicker from 'react-datetime-picker'
-import 'react-toastify/dist/ReactToastify.css'
-import { useEffect, useState } from 'react'
-import { Switch } from '@material-ui/core'
-import Magnifier from 'react-magnifier'
-import { toast } from 'react-toastify'
-import SubImg from './img/icon.png'
-import Plot from 'react-plotly.js'
 import axios from 'axios'
+import Magnifier from 'react-magnifier'
+import BarPlot from './components/BarPlot'
+import { useEffect, useState } from 'react'
+import MainPlot from './components/MainPlot'
+import LinePlot from './components/LinePlot'
+import SubImg from './components/img/icon.png'
+import KeyHandler from './components/KeyHandler'
+import DateSelect from './components/DateSelect'
+import ModeSelect from './components/ModeSelect'
+import RangeSelect from './components/RangeSelect'
+import { validImage, rangeToMinutes } from './components/functions'
 
 
 export default function App() {
@@ -42,34 +44,6 @@ export default function App() {
   }
 
 
-  const rangeToMinutes = (t) => {
-    switch (t) {
-      case '5m':
-        return 5
-      case '30m':
-        return 30
-      case '1h':
-        return 60
-      case '5h':
-        return 300
-      case '12h':
-        return 720
-      default:
-        return 1440
-    }
-  }
-
-
-  const validImage = (url) => {
-    let img = new Image()
-    img.src = url
-    if (img.height !== 0) {
-      return true
-    }
-    return false
-  }
-
-
   return (
     <div className='main'>
       <div className='main-nav'>
@@ -79,9 +53,9 @@ export default function App() {
           <DateSelect live={live} fetchData={fetchData} />
         </div>
         <Magnifier src={subImg} width={250} />
-        <PiePlot dtLabels={dtLabels} />
+        <BarPlot dtLabels={dtLabels} />
       </div>
-      <Keyboard setSubImg={setSubImg} setSensor={setSensor} date={date} sensor={sensor} url={url} validImage={validImage} />
+      <KeyHandler setSubImg={setSubImg} setSensor={setSensor} date={date} sensor={sensor} url={url} validImage={validImage} />
       <div>
         <MainPlot dataDT={dataDT} dtLabels={dtLabels} setSubImg={setSubImg} url={url} setDate={setDate} setSensor={setSensor} validImage={validImage} />
         <LinePlot dtLabels={dtLabels} timeDT={timeDT} />
@@ -90,130 +64,3 @@ export default function App() {
   )
 }
 
-
-export const MainPlot = ({ dataDT, dtLabels, setSubImg, url, setDate, setSensor, validImage }) => {
-
-  const plotLayoutDT = {
-    width: window.innerWidth - 300, height: window.innerHeight * 0.9, margin: { l: 150, r: 10, b: 25, t: 25, pad: 0 }, shapes: dtLabels,
-    paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', xaxis: { color: 'black' }, yaxis: { color: 'black' }
-  }
-
-  const get_image = (p) => {
-    setDate(p.points[0].y)
-    setSensor(p.points[0].x)
-    url = `${url}/image/${p.points[0].y}/${p.points[0].y}_${p.points[0].x.toString().padStart(4, 0)}.png`
-    if (validImage(url)) {
-      setSubImg(url)
-    }
-  }
-
-  return <Plot data={dataDT} layout={plotLayoutDT} onClick={p => get_image(p)} />
-}
-
-
-export const PiePlot = ({ dtLabels }) => {
-
-  const [colors, setColors] = useState({})
-
-  useEffect(() => {
-    let dataSplit = { 'yellow': 0, 'blue': 0, 'green': 0, 'pink': 0, 'purple': 0 }
-    dtLabels.forEach(label => { dataSplit[label.line.color] += 1 })
-    setColors(dataSplit)
-  }, [dtLabels])
-
-  const plotDataPIE = [{
-    y: Object.keys(colors).map(key => { return colors[key] }), x: Object.keys(colors), type: 'bar',
-    marker: { color: ['yellow', 'blue', 'green', 'pink', 'purple',] }
-  }]
-
-  const plotLayoutPIE = {
-    width: 250, height: 270, margin: { l: 0, r: 0, b: 20, t: 40, pad: 0 },
-    paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', showlegend: false
-  }
-
-  return <Plot data={plotDataPIE} layout={plotLayoutPIE} />
-}
-
-
-export const LinePlot = ({ dtLabels, timeDT }) => {
-
-  const [counts, setCounts] = useState([])
-
-  useEffect(() => {
-    let dataSplit = {}
-    dtLabels.forEach((label) => { dataSplit[Math.trunc(label.y1)] = (dataSplit[Math.trunc(label.y1)] || 0) + 1 });
-    setCounts([{ x: timeDT, y: Object.keys(dataSplit).map(key => { return dataSplit[key] }), type: 'scatter', line: { color: 'blue' } }])
-  }, [dtLabels, timeDT])
-
-  const plotLayoutLI = {
-    width: window.innerWidth - 300, height: window.innerHeight * 0.1, margin: { l: 0, r: 0, b: 20, t: 0, pad: 0 },
-    paper_bgcolor: '#F5F5F5', plot_bgcolor: '#F5F5F5', xaxis: { showgrid: false, showticklabels: false }, yaxis: { showgrid: false }
-  }
-
-  return <Plot data={counts} layout={plotLayoutLI} />
-}
-
-
-export const ModeSelect = ({ live, setLive }) => {
-
-  const setMode = (live) => {
-    setLive(!live)
-    toast.configure()
-    toast.info(`${live ? 'Static' : 'Live'} Mode`, { autoClose: 2000 })
-  }
-
-  return <Switch checked={live} onChange={() => setMode(live)} color={'black'} />
-}
-
-
-export const RangeSelect = ({ range, setRange }) => {
-
-  const timeRange = ['5m', '30m', '1h', '5h', '12h', '24h']
-
-  return <div><br />
-    {timeRange.map(t => (t === range ?
-      <span className='btn-range-selected'>{t}</span> : <span className='btn-range' onClick={() => setRange(t)}>{t}</span>
-    ))}
-  </div>
-}
-
-
-export const DateSelect = ({ live, fetchData }) => {
-
-  const [value, setValue] = useState(new Date())
-
-  return <div className='select-wrap'>
-    {live ? '' :
-      <div><br />
-        <DateTimePicker className='datetime' onChange={setValue} value={value} />
-        <button className='btn-range' onClick={() => fetchData(value.getTime())}>GET</button>
-      </div>
-    }
-  </div>
-}
-
-
-export const Keyboard = ({ setSubImg, setSensor, date, sensor, url, validImage }) => {
-
-  return <div>
-    <KeyboardEventHandler
-      handleKeys={['left', 'right']}
-      onKeyEvent={(key, e) => {
-        if (key === 'right') {
-          let image = `${url}/image/` + date + '/' + date + '_' + (parseInt(sensor) + 1).toString().padStart(4, 0) + '.png'
-          if (validImage(image)) {
-            setSubImg(image)
-          }
-          setSensor((parseInt(sensor) + 1).toString().padStart(4, 0))
-        }
-        if (key === 'left') {
-          let image = `${url}/image/` + date + '/' + date + '_' + (parseInt(sensor) - 1).toString().padStart(4, 0) + '.png'
-          if (validImage(url)) {
-            setSubImg(image)
-          }
-          setSensor((parseInt(sensor) - 1).toString().padStart(4, 0))
-        }
-      }
-      } />
-  </div>
-}
